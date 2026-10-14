@@ -1,0 +1,13 @@
+{
+  "name": "logipulse",
+  "version": "1.0.0",
+  "description": "LogiPulse - courier & last-mile delivery platform (SENTEC / The Web Forces)",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": { "express": "^4.19.2" }
+}
