@@ -21,7 +21,8 @@ export const config = {
   // Real PostgreSQL when set; otherwise embedded Postgres (PGlite) so the app runs with zero setup.
   // Tests never touch DATABASE_URL (so a developer's real Supabase can't be polluted); use TEST_DATABASE_URL on purpose.
   databaseUrl: (isTest ? env.TEST_DATABASE_URL : env.DATABASE_URL) || null,
-  databaseSsl: env.DATABASE_SSL === 'true',
+  // Supabase requires SSL: on automatically for *.supabase.co / *.supabase.com unless DATABASE_SSL=false is set explicitly.
+  databaseSsl: env.DATABASE_SSL ? env.DATABASE_SSL === 'true' : /@[^/]*\.supabase\.(co|com)/.test(env.DATABASE_URL ?? ''),
   databasePoolMax: Number(env.DATABASE_POOL_MAX) || 10, // keep <= your provider's connection limit (Supabase pooler)
   pgliteDir: env.PGLITE_DIR || (isTest ? 'memory://' : path.join(root, 'data', 'pgdata')),
   rateLimitDisabled: env.DISABLE_RATE_LIMIT === '1',

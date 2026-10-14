@@ -7,7 +7,10 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node --test --test-concurrency=1"
+    "test": "node --test --test-concurrency=1",
+    "db:check": "node scripts/db.js check",
+    "db:setup": "node scripts/db.js setup",
+    "db:reset": "node scripts/db.js reset"
   },
   "engines": {
     "node": ">=20.12"

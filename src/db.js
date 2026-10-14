@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config.js';
+import { explainConnectionError } from './lib/dbUrl.js';
 
 let impl = null;
 
@@ -18,6 +19,14 @@ export async function initDb() {
       ssl: config.databaseSsl ? { rejectUnauthorized: false } : undefined,
       max: config.databasePoolMax,
     });
+    // Poolers close idle connections; without this listener an idle-client error would crash the process.
+    pool.on('error', (err) => console.error('[pg pool] idle client error:', err.message));
+    try {
+      await pool.query('SELECT 1');
+    } catch (err) {
+      await pool.end().catch(() => {});
+      throw explainConnectionError(err, config.databaseUrl);
+    }
     impl = {
       kind: 'postgres',
       query: (text, params) => pool.query(text, params),

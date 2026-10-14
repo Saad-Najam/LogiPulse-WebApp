@@ -5,7 +5,7 @@ LogiPulse is a courier / last-mile delivery platform with three role-based dashb
 share **one data layer**. A customer requests a delivery, the nearest rider accepts it, they chat per order, the rider
 walks it through PICKED_UP → IN_TRANSIT → DELIVERED, and an admin watches everything live.
 
-> Status: the backend (REST API, WebSockets, database, auth, security) is complete and covered by 42 automated tests.
+> Status: the backend (REST API, WebSockets, database, auth, security) is complete and covered by 50 automated tests.
 > Frontend dashboards are built against it in `public/`.
 
 ## Tech Stack
@@ -116,6 +116,17 @@ client → server (all take an optional ack): `auth:join`, `order:join`, `order:
 - **State propagation** — every write goes to Postgres, then the matching Socket.IO event is emitted; polling the REST endpoints returns the same data.
 - **Trust** — `sender_role`, `user_id`, `rider_id` always come from the verified JWT, never the request body (a test forges `sender_role` and it is ignored).
 - **10,000 riders** — replace polling with socket push (already supported), add PostGIS + GiST index and `ST_DWithin` instead of scanning pending orders in Node, move rate-limit state to Redis, queue assignment.
+
+## Supabase quick start
+```bash
+# 1. paste the Session-pooler URI into DATABASE_URL in .env (SSL is auto-enabled for supabase hosts)
+npm run db:check          # connects, shows host/user/TLS, tables, row counts and RLS status; explains common mistakes
+npm run db:setup          # create tables + demo data (the server also does this on boot)
+npm run db:reset -- --yes # wipe + re-seed (demo reset before judging)
+npm run dev
+```
+Connection problems (wrong password, IPv6-only direct URL, missing `postgres.<ref>` username, paused project…) are reported
+with a plain-language fix instead of a raw driver error.
 
 ## Deploying with Supabase + Render
 1. Supabase: create a project, then **Connect → Session pooler** and copy the URI (the direct connection is IPv6-only and won't work from Render's free tier).
