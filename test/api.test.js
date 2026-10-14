@@ -3,49 +3,20 @@ process.env.DISABLE_RATE_LIMIT = '1';
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { io as connect } from 'socket.io-client';
+import { call, login, order, waitFor, openSocket as open, setBase, PASSWORD } from '../testing/helpers.js';
 
 const { start } = await import('../src/server.js');
 const { haversineDistance } = await import('../src/lib/haversine.js');
 
 let app;
 let base;
-const PASSWORD = 'password123';
 
 test.before(async () => {
   app = await start({ port: 0 });
   base = `http://localhost:${app.port}`;
+  setBase(base);
 });
 test.after(() => app.stop());
-
-async function call(method, url, { token, body } = {}) {
-  const res = await fetch(base + url, {
-    method,
-    headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  return { status: res.status, body: await res.json().catch(() => null) };
-}
-async function login(role, email) {
-  const r = await call('POST', '/api/auth/login', { body: { role, email, password: PASSWORD } });
-  assert.equal(r.status, 200, `login ${email}`);
-  return { token: r.body.token, user: r.body.user };
-}
-const order = (over = {}) => ({
-  pickup_address: 'Test pickup street', pickup_lat: 24.86, pickup_lng: 67.0, delivery_address: 'Test drop street', description: 'box', ...over,
-});
-
-const waitFor = (socket, event, ms = 3000) =>
-  new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error(`timeout waiting for ${event}`)), ms);
-    socket.once(event, (p) => { clearTimeout(t); resolve(p); });
-  });
-const open = (token) =>
-  new Promise((resolve, reject) => {
-    const s = connect(base, { auth: { token }, transports: ['websocket'], forceNew: true });
-    s.on('connect', () => resolve(s));
-    s.on('connect_error', reject);
-  });
 
 test('haversine gives real distances', () => {
   assert.equal(haversineDistance(24.86, 67, 24.86, 67), 0);

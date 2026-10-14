@@ -5,7 +5,7 @@ LogiPulse is a courier / last-mile delivery platform with three role-based dashb
 share **one data layer**. A customer requests a delivery, the nearest rider accepts it, they chat per order, the rider
 walks it through PICKED_UP → IN_TRANSIT → DELIVERED, and an admin watches everything live.
 
-> Status: the backend (REST API, WebSockets, database, auth, security) is complete and tested.
+> Status: the backend (REST API, WebSockets, database, auth, security) is complete and covered by 42 automated tests.
 > Frontend dashboards are built against it in `public/`.
 
 ## Tech Stack
@@ -68,7 +68,7 @@ git clone <your-repo-url>
 cd logipulse
 npm install
 npm run dev          # http://localhost:3000  (embedded Postgres, demo data auto-seeded)
-npm test             # 13 integration tests (API, RBAC, race, chat scoping, sockets, rate limit)
+npm test             # ~2 min: API, RBAC, race, chat scoping, sockets, every rate limiter, and the whole API suite again through the real `pg` driver
 ```
 Demo logins (all passwords `password123`): `user@logipulse.com`, `rider@logipulse.com`, `admin@logipulse.com`
 (+ `bilal@`/`sara@` customers, `usman@`/`zain@` riders). See `.env.example` for configuration; set `DATABASE_URL` for real Postgres.
@@ -81,21 +81,24 @@ Auth: `Authorization: Bearer <jwt>` from `POST /api/auth/login`. Errors: `{ erro
 | Method | Path | Who | Notes |
 |---|---|---|---|
 | POST | `/api/auth/login` | public | `{email,password,role}` → `{token,user}`; 10 failures / 15 min / IP |
-| POST | `/api/auth/register` | public | role `user` or `rider` |
+| POST | `/api/auth/register` | public | role `user` or `rider`; 20 / hour / IP |
 | POST | `/api/auth/logout` | any | stateless → `{ok:true}` |
 | GET | `/api/auth/me` | any | session rehydrate |
 | POST | `/api/orders` | user | creates PENDING / NORMAL; 20 / min |
 | GET | `/api/orders` | admin | `?page&limit&status&priority&q` → `{orders,total,page,pages}` |
-| GET | `/api/orders/mine` | user | own orders, newest first |
+| GET | `/api/orders/mine` | user / rider | user: own orders; rider: assigned orders incl. delivered |
+| GET | `/api/orders/active` | rider | current undelivered order or `null` ("My Active Order" after reload) |
 | GET | `/api/orders/available` | rider | pending, `distance_km`, nearest first; `?priority&lat&lng` |
 | GET | `/api/orders/:id` | party / admin | includes nested `rider` + `statusHistory` |
 | PATCH | `/api/orders/:id/accept` | rider | atomic; 409 `ORDER_ALREADY_ACCEPTED` / `RIDER_BUSY` |
 | PATCH | `/api/orders/:id/status` | assigned rider | state machine; 400 `INVALID_STATUS_TRANSITION` |
 | PATCH | `/api/orders/:id/priority` | admin | Day 2 |
 | GET | `/api/orders/:id/status-history` | party / admin | timeline |
-| GET / POST | `/api/orders/:id/messages` | user & rider (admin read) | POST 400 `CHAT_NOT_AVAILABLE` until a rider is assigned; 30 / min |
+| GET / POST | `/api/orders/:id/messages` | user & rider (admin read) | GET `?after=<id>` for incremental polling; POST 400 `CHAT_NOT_AVAILABLE` until a rider is assigned; 30 / min |
 | GET | `/api/riders` | admin | busy first, with active order + delivery count |
+| GET | `/api/riders/me` | rider | own location + availability |
 | GET | `/api/riders/:id` | admin | + last 5 orders |
+| GET | `/api/locations` | public | 16 Karachi landmarks `{name,area,lat,lng}` for the request form |
 | PATCH | `/api/riders/me/location` | rider | `{lat,lng}`; 60 / min |
 | PATCH | `/api/riders/me/availability` | rider | `{is_available}` |
 | GET | `/api/users`, `/api/users/:id` | admin | never returns password hashes |
@@ -113,3 +116,9 @@ client → server (all take an optional ack): `auth:join`, `order:join`, `order:
 - **State propagation** — every write goes to Postgres, then the matching Socket.IO event is emitted; polling the REST endpoints returns the same data.
 - **Trust** — `sender_role`, `user_id`, `rider_id` always come from the verified JWT, never the request body (a test forges `sender_role` and it is ignored).
 - **10,000 riders** — replace polling with socket push (already supported), add PostGIS + GiST index and `ST_DWithin` instead of scanning pending orders in Node, move rate-limit state to Redis, queue assignment.
+
+## Deploying with Supabase + Render
+1. Supabase: create a project, then **Connect → Session pooler** and copy the URI (the direct connection is IPv6-only and won't work from Render's free tier).
+2. Render: New → Blueprint (uses `render.yaml`) or New → Web Service. Set `DATABASE_URL` = the pooler URI, `DATABASE_SSL=true`; `JWT_SECRET` is generated for you. Optionally `DATABASE_POOL_MAX` (default 10).
+3. Tables, indexes and demo data are created on first boot. Row-level security is enabled on every table so Supabase's public REST API cannot read them; the server connects as `postgres`, which bypasses RLS.
+4. Demo reset (SQL editor): `TRUNCATE messages, order_status_log, priority_change_log, orders, users, riders, admins RESTART IDENTITY CASCADE;` then restart the service to re-seed.
