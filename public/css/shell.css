@@ -1,0 +1,29 @@
+/* App shell shared by the three dashboards: top bar + page container + section headers */
+
+.topbar { position: sticky; top: 0; z-index: 50; height: var(--topbar-h); background: color-mix(in srgb, var(--surface) 86%, transparent); backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid var(--border); }
+.topbar-inner { height: 100%; max-width: 1480px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.topbar-left, .topbar-right, .topbar-center { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.topbar-center { flex: 1; justify-content: center; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none !important; }
+.brand-name { font: 800 18px var(--font-display); letter-spacing: -.03em; }
+.logo-mark { filter: drop-shadow(0 4px 10px var(--accent-glow)); }
+.role-chip { height: 24px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-text); font-size: 12px; font-weight: 700; letter-spacing: .01em; }
+.topbar-sep { width: 1px; height: 24px; background: var(--border); }
+.account { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.account-text { display: grid; line-height: 1.25; min-width: 0; max-width: 180px; }
+.account-text strong { font-size: 13px; font-weight: 650; }
+.account-text span { font-size: 11.5px; color: var(--text-3); }
+
+.page { max-width: 1280px; margin: 0 auto; padding: 28px 24px 64px; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+.page-head p { color: var(--text-2); margin-top: 4px; font-size: 14.5px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 6px; }
+.section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+
+@media (max-width: 900px) {
+  .account-text { display: none; }
+  .role-chip { display: none; }
+  .topbar-inner { padding: 0 14px; }
+  .page { padding: 20px 14px 56px; }
+  .live span { display: none; }
+}
