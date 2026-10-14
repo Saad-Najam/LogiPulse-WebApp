@@ -6,6 +6,8 @@ import { config } from './config.js';
 import { dbKind } from './db.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
+import { requestLogger } from './middleware/requestLogger.js';
+import locationRoutes from './routes/locations.js';
 import authRoutes from './routes/auth.js';
 import orderRoutes from './routes/orders.js';
 import messageRoutes from './routes/messages.js';
@@ -30,9 +32,11 @@ export function createApp() {
   app.use(express.json({ limit: '16kb' }));
   // 4. Global per-IP throttle.
   app.use('/api', globalLimiter);
+  app.use('/api', requestLogger);
 
   app.get('/api/health', (req, res) => res.json({ ok: true, db: dbKind(), uptime: Math.round(process.uptime()) }));
   app.use('/api/auth', authRoutes);
+  app.use('/api/locations', locationRoutes);
   app.use('/api/orders/:id/messages', messageRoutes); // before /api/orders so the nested path wins
   app.use('/api/orders', orderRoutes);
   app.use('/api/riders', riderRoutes);

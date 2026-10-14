@@ -28,6 +28,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       console.log(`LogiPulse API + sockets on http://localhost:${port}${seeded ? ' (demo data seeded)' : ''}`);
       // Close sockets + DB cleanly on deploy/restart so embedded Postgres never needs crash recovery.
       for (const sig of ['SIGINT', 'SIGTERM']) process.once(sig, () => stop().finally(() => process.exit(0)));
+      // A stray rejection in a socket handler must not take the whole demo down.
+      process.on('unhandledRejection', (err) => console.error('[unhandledRejection]', err));
     })
     .catch((err) => {
       console.error('Failed to start:', err);

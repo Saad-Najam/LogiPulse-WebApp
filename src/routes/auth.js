@@ -7,7 +7,7 @@ import { ROLE_TABLE } from '../lib/constants.js';
 import { requireAuth, signToken } from '../middleware/auth.js';
 import { asyncHandler, AppError } from '../middleware/errorHandler.js';
 import { validate } from '../middleware/validate.js';
-import { authLimiter } from '../middleware/rateLimiter.js';
+import { authLimiter, registerLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 
@@ -38,7 +38,7 @@ router.post('/login', authLimiter, validate(loginSchema), asyncHandler(async (re
   res.json({ token: signToken(account, role), user: publicUser(account, role) });
 }));
 
-router.post('/register', validate(registerSchema), asyncHandler(async (req, res) => {
+router.post('/register', registerLimiter, validate(registerSchema), asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
   const hash = await bcrypt.hash(password, Math.max(config.bcryptRounds, 10));
   try {
