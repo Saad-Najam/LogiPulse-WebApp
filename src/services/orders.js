@@ -2,16 +2,24 @@ import { query } from '../db.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 export const ORDER_SELECT = `
-  SELECT o.*, u.name AS user_name, r.name AS rider_name
+  SELECT o.*, u.name AS user_name, r.name AS rider_name,
+         r.current_lat AS rider_lat, r.current_lng AS rider_lng, r.location_updated_at AS rider_location_at
   FROM orders o
   JOIN users u ON u.id = o.user_id
   LEFT JOIN riders r ON r.id = o.rider_id`;
 
 // Adds a nested `rider` object (null until accepted) next to the flat fields.
-export const presentOrder = (row) => ({
-  ...row,
-  rider: row.rider_id ? { id: row.rider_id, name: row.rider_name } : null,
-});
+// A rider's live position is only shared while the delivery is in progress (never before accept, never after delivery).
+export const presentOrder = (row) => {
+  const tracking = row.rider_id && row.status !== 'DELIVERED';
+  return {
+    ...row,
+    rider: row.rider_id ? { id: row.rider_id, name: row.rider_name } : null,
+    rider_lat: tracking ? row.rider_lat : null,
+    rider_lng: tracking ? row.rider_lng : null,
+    rider_location_at: tracking ? row.rider_location_at : null,
+  };
+};
 
 export async function findOrder(id, db = { query }) {
   const { rows } = await db.query(`${ORDER_SELECT} WHERE o.id = $1`, [id]);

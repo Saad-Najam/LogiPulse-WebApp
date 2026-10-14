@@ -20,7 +20,14 @@ export function createApp() {
   app.set('trust proxy', 1); // behind Render/Vercel proxies: use the real client IP for rate limits
 
   // 1. Security headers. (Plain-http local dev must not be force-upgraded to https.)
-  app.use(helmet(config.isProd ? {} : { contentSecurityPolicy: { directives: { 'upgrade-insecure-requests': null } } }));
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        'img-src': ["'self'", 'data:', 'https://tile.openstreetmap.org'], // map tiles (OpenStreetMap)
+        ...(config.isProd ? {} : { 'upgrade-insecure-requests': null }),
+      },
+    },
+  }));
   // 2. CORS: only the configured frontend origin(s). Unset = same-origin only, never a wildcard.
   app.use(cors({
     origin: config.frontendOrigins,
