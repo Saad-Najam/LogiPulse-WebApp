@@ -26,7 +26,16 @@ router.get('/', requireRole('admin'), asyncHandler(async (req, res) => {
   res.json(rows);
 }));
 
-// PATCH /api/riders/me/location - must be declared before /:id
+// GET /api/riders/me - the rider's own profile: location + availability (drives the toggle and location banner)
+router.get('/me', requireRole('rider'), asyncHandler(async (req, res) => {
+  const { rows } = await query(
+    `SELECT id, name, email, is_available, current_lat, current_lng, location_updated_at FROM riders WHERE id = $1`, [req.user.id],
+  );
+  if (!rows[0]) throw new AppError('Rider not found', 404, 'RIDER_NOT_FOUND');
+  res.json(rows[0]);
+}));
+
+// PATCH /api/riders/me/location - /me routes must be declared before /:id
 router.patch('/me/location', requireRole('rider'), locationLimiter, validate(z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),

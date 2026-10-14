@@ -75,10 +75,19 @@ router.get('/', requireRole('admin'), validate(listQuery, 'query'), asyncHandler
   res.json({ orders: rows.map(presentOrder), total, page, pages: Math.max(1, Math.ceil(total / limit)) });
 }));
 
-// GET /api/orders/mine - customer's own orders
-router.get('/mine', requireRole('user'), asyncHandler(async (req, res) => {
-  const { rows } = await query(`${ORDER_SELECT} WHERE o.user_id = $1 ORDER BY o.created_at DESC, o.id DESC`, [req.user.id]);
+// GET /api/orders/mine - a customer's own orders, or a rider's assigned orders (history incl. delivered)
+router.get('/mine', requireRole('user', 'rider'), asyncHandler(async (req, res) => {
+  const column = req.user.role === 'user' ? 'o.user_id' : 'o.rider_id';
+  const { rows } = await query(`${ORDER_SELECT} WHERE ${column} = $1 ORDER BY o.created_at DESC, o.id DESC`, [req.user.id]);
   res.json(rows.map(presentOrder));
+}));
+
+// GET /api/orders/active - the rider's current undelivered order (or null), so "My Active Order" survives a reload
+router.get('/active', requireRole('rider'), asyncHandler(async (req, res) => {
+  const { rows } = await query(
+    `${ORDER_SELECT} WHERE o.rider_id = $1 AND o.status <> 'DELIVERED' ORDER BY o.id DESC LIMIT 1`, [req.user.id],
+  );
+  res.json(rows[0] ? presentOrder(rows[0]) : null);
 }));
 
 // GET /api/orders/available - PENDING orders for riders, nearest first.

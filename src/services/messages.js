@@ -17,7 +17,8 @@ export async function canJoinChat(orderId, user) {
   return !!rows[0] && isParty(rows[0], user);
 }
 
-export async function listMessages(orderId, user) {
+// `afterId` lets pollers fetch only messages newer than the last one they have.
+export async function listMessages(orderId, user, afterId = 0) {
   const order = await loadParties(orderId);
   if (!isParty(order, user)) throw new AppError('Not a party to this order', 403, 'FORBIDDEN');
   const { rows } = await query(
@@ -26,9 +27,9 @@ export async function listMessages(orderId, user) {
      FROM messages m
      LEFT JOIN users u  ON u.id = m.sender_id AND m.sender_role = 'user'
      LEFT JOIN riders r ON r.id = m.sender_id AND m.sender_role = 'rider'
-     WHERE m.order_id = $1
+     WHERE m.order_id = $1 AND m.id > $2
      ORDER BY m.created_at ASC, m.id ASC`,
-    [orderId],
+    [orderId, afterId],
   );
   return rows;
 }
