@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en" data-role="admin">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Operations · LogiPulse</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%234f46e5'/%3E%3Cpath d='M6.5 21h6.2l3.1-8.4 5 16 3.6-9.6h9.1' fill='none' stroke='%23fff' stroke-width='2.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/css/design.css" />
+  <link rel="stylesheet" href="/css/shell.css" />
+  <link rel="stylesheet" href="/css/orders.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+  <script src="/js/lib/boot.js"></script>
+</head>
+<body>
+  <header id="topbar"></header>
+
+  <div class="admin-app">
+    <nav class="sidebar" id="sidebar" aria-label="Sections">
+      <div class="nav-group">
+        <a class="nav-item" href="#overview" data-route="overview"><span data-i="dashboard"></span><span class="nav-label">Overview</span></a>
+        <a class="nav-item" href="#orders" data-route="orders"><span data-i="package"></span><span class="nav-label">Orders</span><span class="nav-count" id="nav-orders"></span></a>
+        <a class="nav-item" href="#riders" data-route="riders"><span data-i="bike"></span><span class="nav-label">Riders</span><span class="nav-count" id="nav-riders"></span></a>
+        <a class="nav-item" href="#users" data-route="users"><span data-i="users"></span><span class="nav-label">Users</span><span class="nav-count" id="nav-users"></span></a>
+        <a class="nav-item" href="#priority" data-route="priority"><span data-i="flame"></span><span class="nav-label">Priority</span><span class="nav-count urgent hidden" id="nav-urgent"></span></a>
+      </div>
+      <div class="side-foot">
+        <div class="sync"><span class="sync-dot"></span><div><strong>Real-time</strong><small id="sync-text">Syncing…</small></div></div>
+      </div>
+    </nav>
+
+    <main class="admin-main" id="main">
+
+      <!-- ============ OVERVIEW ============ -->
+      <section class="route-sec hidden" id="sec-overview">
+        <div class="page-head">
+          <div><div class="eyebrow">Operations</div><h1>Platform overview</h1><p>Live picture of orders, riders and priority load.</p></div>
+        </div>
+        <div class="stat-grid" id="stat-grid"></div>
+
+        <div class="grid-3">
+          <div class="card span-2">
+            <div class="card-head"><h3><span class="icon-bubble" data-i="chart"></span>Orders per hour</h3><span class="chip">Last 8 hours</span></div>
+            <div class="card-pad"><div class="bars" id="bars"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3><span class="icon-bubble" data-i="flame"></span>Priority mix</h3><a href="#priority" class="btn btn-ghost btn-sm">Details</a></div>
+            <div class="card-pad" id="ov-priority"></div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="card span-2">
+            <div class="card-head"><h3><span class="icon-bubble" data-i="map"></span>Fleet map</h3>
+              <div class="map-legend-inline"><span><i class="d-rider"></i>Available rider</span><span><i class="d-busy"></i>Busy rider</span><span><i class="d-order"></i>Pending order</span></div></div>
+            <div class="fleet-map"><div class="map" id="fleet-map"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3><span class="icon-bubble" data-i="bike"></span>Rider status</h3><span class="chip" id="ov-fleet-chip">-</span></div>
+            <div id="ov-riders" class="mini-list"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3><span class="icon-bubble" data-i="clock"></span>Recent orders</h3><a href="#orders" class="btn btn-ghost btn-sm">View all</a></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Order</th><th>Customer</th><th>Route</th><th>Rider</th><th>Status</th><th>Priority</th><th>Created</th></tr></thead><tbody id="ov-orders"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ============ ORDERS ============ -->
+      <section class="route-sec hidden" id="sec-orders">
+        <div class="page-head">
+          <div><div class="eyebrow">Operations</div><h1>All orders</h1><p>Search, filter and re-prioritise every order on the platform.</p></div>
+          <span class="chip" id="o-count">0 orders</span>
+        </div>
+        <div class="card">
+          <div class="toolbar">
+            <div class="input-wrap grow"><span data-i="search"></span><input class="input" id="o-search" placeholder="Search by order ID, address or customer" /></div>
+            <select class="select" id="o-status" aria-label="Filter by status">
+              <option value="">All statuses</option><option value="PENDING">Pending</option><option value="ACCEPTED">Accepted</option><option value="PICKED_UP">Picked up</option><option value="IN_TRANSIT">In transit</option><option value="DELIVERED">Delivered</option>
+            </select>
+            <select class="select" id="o-priority" aria-label="Filter by priority">
+              <option value="">All priorities</option><option value="URGENT">Urgent</option><option value="HIGH">High</option><option value="NORMAL">Normal</option>
+            </select>
+          </div>
+          <div class="table-wrap"><table class="table orders-table"><thead><tr><th>Order</th><th>Customer</th><th>Route</th><th>Rider</th><th>Status</th><th>Priority</th><th>Created</th><th></th></tr></thead><tbody id="o-body"></tbody></table></div>
+          <div id="o-empty"></div>
+          <div class="pager"><span id="o-range" class="muted"></span><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" id="o-prev"></button><button class="btn btn-secondary btn-sm" id="o-next"></button></div></div>
+        </div>
+      </section>
+
+      <!-- ============ RIDERS ============ -->
+      <section class="route-sec hidden" id="sec-riders">
+        <div class="page-head">
+          <div><div class="eyebrow">Fleet</div><h1>Riders</h1><p>Availability, assignments and last known positions.</p></div>
+          <div style="display:flex;align-items:center;gap:14px"><span class="chip" id="r-summary">-</span>
+            <label class="toggle-row"><span class="switch"><input type="checkbox" id="r-only" /><i class="track"></i><i class="knob"></i></span><span>Available only</span></label></div>
+        </div>
+        <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Rider</th><th>Status</th><th>Current assignment</th><th>Last location</th><th>Last active</th><th>Deliveries</th><th></th></tr></thead><tbody id="r-body"></tbody></table></div><div id="r-empty"></div></div>
+      </section>
+
+      <!-- ============ USERS ============ -->
+      <section class="route-sec hidden" id="sec-users">
+        <div class="page-head">
+          <div><div class="eyebrow">Customers</div><h1>Users</h1><p>Everyone who has registered on the platform.</p></div>
+          <span class="chip" id="u-count">0 customers</span>
+        </div>
+        <div class="card">
+          <div class="toolbar"><div class="input-wrap grow"><span data-i="search"></span><input class="input" id="u-search" placeholder="Search by name or email" /></div></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Customer</th><th>Email</th><th>Member since</th><th>Orders</th><th></th></tr></thead><tbody id="u-body"></tbody></table></div>
+          <div id="u-empty"></div>
+        </div>
+      </section>
+
+      <!-- ============ PRIORITY ============ -->
+      <section class="route-sec hidden" id="sec-priority">
+        <div class="page-head">
+          <div><div class="eyebrow">Peak hours</div><h1>Priority analytics</h1><p>Live counts of open orders by priority. Updates as orders change.</p></div>
+        </div>
+        <div id="p-alert"></div>
+        <div class="prio-tiles" id="p-tiles"></div>
+        <div class="card card-pad" style="margin-top:16px"><div class="block-title" style="margin-bottom:12px">Distribution of open orders</div><div id="p-bar"></div></div>
+        <div class="grid-2" style="margin-top:16px">
+          <div class="card"><div class="card-head"><h3><span class="icon-bubble" data-i="alert"></span>Needs attention</h3><span class="chip" id="p-attn-count">0</span></div><div id="p-attn" class="mini-list"></div></div>
+          <div class="card"><div class="card-head"><h3><span class="icon-bubble" data-i="trend"></span>Recent escalations</h3></div><div id="p-esc" class="mini-list"></div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/vendor/leaflet/leaflet.js"></script>
+  <script type="module" src="/js/pages/admin.js"></script>
+</body>
+</html>
