@@ -1,132 +1,21 @@
 <!doctype html>
-<html lang="en" data-role="user">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sign in · LogiPulse</title>
-  <meta name="description" content="LogiPulse - courier and last-mile delivery platform for customers, riders and operations." />
-  <meta name="theme-color" content="#0b1220" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%232563eb'/%3E%3Cpath d='M6.5 21h6.2l3.1-8.4 5 16 3.6-9.6h9.1' fill='none' stroke='%23fff' stroke-width='2.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/css/design.css" />
-  <link rel="stylesheet" href="/css/login.css" />
-  <script src="/js/lib/boot.js"></script>
-</head>
-<body class="login">
-  <main class="login-shell">
-    <!-- Brand panel -->
-    <section class="brand-panel" aria-hidden="false">
-      <div class="brand-glow"></div>
-      <header class="bp-top">
-        <span id="bp-logo"></span>
-        <span class="bp-name">LogiPulse</span>
-      </header>
-
-      <div class="bp-hero">
-        <p class="bp-eyebrow"><span class="dot"></span> Courier &amp; last-mile delivery</p>
-        <h1>Every delivery,<br /><span class="grad">in perfect sync.</span></h1>
-        <p class="bp-lead">One live data layer connects customers, riders and operations, so a request becomes a delivery without a single refresh.</p>
-
-        <div class="route-art" role="img" aria-label="Animated delivery route between a pickup point and a drop-off">
-          <svg viewBox="0 0 560 300" preserveAspectRatio="xMidYMid slice">
-            <defs>
-              <linearGradient id="routeGrad" x1="0" x2="1"><stop offset="0" stop-color="var(--accent)" /><stop offset="1" stop-color="#7dd3fc" /></linearGradient>
-              <radialGradient id="fadeMask" cx=".5" cy=".5" r=".7"><stop offset=".55" stop-color="#fff" /><stop offset="1" stop-color="#000" /></radialGradient>
-              <mask id="fade"><rect width="560" height="300" fill="url(#fadeMask)" /></mask>
-            </defs>
-            <g class="streets" mask="url(#fade)" stroke="rgba(148,163,184,.16)" stroke-width="1" fill="none">
-              <path d="M0 60H560M0 120H560M0 180H560M0 240H560M80 0V300M160 0V300M240 0V300M320 0V300M400 0V300M480 0V300" />
-              <path d="M0 270 560 30M0 150 380 0M180 300 560 120" stroke="rgba(148,163,184,.1)" />
-            </g>
-            <path id="route" d="M92 226 C 170 226, 170 150, 258 150 S 372 206, 428 132 S 470 92, 482 88" fill="none" stroke="rgba(148,163,184,.25)" stroke-width="5" stroke-linecap="round" />
-            <path class="route-line" d="M92 226 C 170 226, 170 150, 258 150 S 372 206, 428 132 S 470 92, 482 88" fill="none" stroke="url(#routeGrad)" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 12" />
-            <g transform="translate(92 226)"><circle r="16" fill="rgba(125,211,252,.14)" /><circle r="7" fill="#7dd3fc" /><circle r="3" fill="#0b1220" /></g>
-            <g transform="translate(482 88)">
-              <circle class="ping" r="12" fill="none" stroke="var(--accent)" stroke-width="2" />
-              <circle class="ping p2" r="12" fill="none" stroke="var(--accent)" stroke-width="2" />
-              <circle r="9" fill="var(--accent)" /><path d="m-3.6 0.4 2.4 2.5 4.6-5" stroke="var(--on-accent)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-            </g>
-            <g>
-              <circle r="15" fill="var(--accent)" opacity=".25"><animateMotion dur="7s" repeatCount="indefinite" rotate="auto"><mpath href="#route" /></animateMotion></circle>
-              <circle r="8" fill="#fff"><animateMotion dur="7s" repeatCount="indefinite"><mpath href="#route" /></animateMotion></circle>
-              <circle r="4.5" fill="var(--accent)"><animateMotion dur="7s" repeatCount="indefinite"><mpath href="#route" /></animateMotion></circle>
-            </g>
-          </svg>
-
-          <div class="float-card fc-a">
-            <div class="fc-row"><span class="fc-id">#104</span><span class="fc-badge">In transit</span></div>
-            <div class="fc-line"><i></i> Dolmen Mall Clifton</div>
-            <div class="fc-line"><i class="to"></i> Gulshan-e-Iqbal</div>
-          </div>
-          <div class="float-card fc-b">
-            <div class="fc-k">Nearest request</div>
-            <div class="fc-v">1.4 <small>km</small></div>
-          </div>
-        </div>
-      </div>
-
-      <ul class="bp-features">
-        <li><span class="ico" data-i="pin"></span><div><strong>Nearest-rider matching</strong><span>Real Haversine distance, sorted live.</span></div></li>
-        <li><span class="ico" data-i="chat"></span><div><strong>Chat scoped to each order</strong><span>Customer and rider, nobody else.</span></div></li>
-        <li><span class="ico" data-i="activity"></span><div><strong>Live operations view</strong><span>Priority analytics and fleet status.</span></div></li>
-      </ul>
-      <footer class="bp-foot">SENTEC · The Web Forces</footer>
-    </section>
-
-    <!-- Form panel -->
-    <section class="form-panel">
-      <button class="btn btn-ghost btn-icon theme-fab" id="theme-btn" aria-label="Toggle theme"></button>
-      <div class="form-card" id="card">
-        <div class="mobile-brand"><span id="mb-logo"></span><span class="bp-name">LogiPulse</span></div>
-
-        <div class="form-head">
-          <h2 id="title">Welcome back</h2>
-          <p id="subtitle">Sign in to continue to your dashboard.</p>
-        </div>
-
-        <div class="notice hidden" id="notice" role="alert"></div>
-
-        <div class="seg role-seg" id="role-seg" aria-label="Sign in as">
-          <button type="button" data-value="user" aria-selected="true"><span data-i="user"></span>Customer</button>
-          <button type="button" data-value="rider" aria-selected="false"><span data-i="bike"></span>Rider</button>
-          <button type="button" data-value="admin" aria-selected="false"><span data-i="shield"></span>Admin</button>
-        </div>
-
-        <form id="form" novalidate>
-          <div class="field hidden" id="f-name">
-            <label for="name">Full name</label>
-            <div class="input-wrap"><span data-i="user"></span><input class="input" id="name" name="name" autocomplete="name" placeholder="Ayesha Khan" /></div>
-            <span class="error-text"></span>
-          </div>
-          <div class="field" id="f-email">
-            <label for="email">Email</label>
-            <div class="input-wrap"><span data-i="mail"></span><input class="input" id="email" name="email" type="email" autocomplete="username" placeholder="you@company.com" inputmode="email" /></div>
-            <span class="error-text"></span>
-          </div>
-          <div class="field" id="f-password">
-            <label for="password">Password</label>
-            <div class="input-wrap">
-              <span data-i="lock"></span>
-              <input class="input" id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" />
-              <button type="button" class="btn btn-ghost btn-icon btn-sm trail" id="toggle-pw" aria-label="Show password"></button>
-            </div>
-            <span class="error-text"></span>
-          </div>
-          <button class="btn btn-primary btn-lg btn-block" id="submit" type="submit"><span id="submit-label">Sign in</span><span data-i="arrowR"></span></button>
-        </form>
-
-        <div class="demo" id="demo">
-          <div class="demo-head"><span>Demo account</span><i></i></div>
-          <button type="button" class="demo-row" id="demo-fill">
-            <span class="avatar sm" id="demo-avatar"></span>
-            <span class="demo-text"><strong id="demo-name"></strong><small id="demo-email"></small></span>
-            <span class="demo-action">Autofill</span>
-          </button>
-        </div>
-
-        <p class="switch-mode" id="switch-mode">New customer? <a href="#" id="mode-link">Create an account</a></p>
-      </div>
-    </section>
-  </main>
-  <script type="module" src="/js/pages/login.js"></script>
-</body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%232f4436'/><path d='M13 3L4 14h7l-2 7 9-11h-7l2-7z' fill='%23ffd98a'/></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LogiPulse — Last-Mile Delivery Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="/assets/index-CaO8SbQL.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-yQiw50cw.css">
+  </head>
+  <body class="bg-[#e5e4da] text-[#141a16] antialiased selection:bg-[#2f5640]/20">
+    <div id="root"></div>
+  </body>
 </html>
+

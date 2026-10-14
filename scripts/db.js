@@ -2,10 +2,16 @@
 //   check  - connect, report what you're connected to, list tables / RLS / row counts
 //   setup  - create tables (idempotent) and seed demo data if the database is empty
 //   reset  - TRUNCATE everything and re-seed (needs --yes). For resetting the demo before judging.
+import dns from 'node:dns';
 import { config } from '../src/config.js';
 import { initDb, query, closeDb } from '../src/db.js';
 import { seedIfEmpty } from '../src/db/seed.js';
 import { inspectDatabaseUrl } from '../src/lib/dbUrl.js';
+
+try {
+  dns.setDefaultResultOrder('ipv4first');
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch { /* ignore */ }
 
 const cmd = process.argv[2];
 const TABLES = ['users', 'riders', 'admins', 'orders', 'messages', 'order_status_log', 'priority_change_log'];

@@ -5,15 +5,27 @@ LogiPulse is a courier / last-mile delivery platform with three role-based dashb
 share **one data layer**. A customer requests a delivery, the nearest rider accepts it, they chat per order, the rider
 walks it through PICKED_UP → IN_TRANSIT → DELIVERED, and an admin watches everything live.
 
-> Status: the backend (REST API, WebSockets, database, auth, security) is complete and covered by 50 automated tests.
-> Frontend dashboards are built against it in `public/`.
+> Status: backend (REST API, WebSockets, database, auth, security) covered by 50 automated tests, plus three role-based
+> dashboards built on a custom design system and verified end-to-end through a real browser (`npm run e2e`).
 
 ## Tech Stack
-- Frontend: vanilla JS modules (`public/`), served by the same Node process
+- Frontend: vanilla ES modules + a custom CSS design system (no build step), served by the same Node process.
+  Leaflet maps (OpenStreetMap tiles), Socket.IO client, self-hosted Inter / Plus Jakarta Sans / JetBrains Mono fonts
 - Backend: Node.js 20+, Express 4, Socket.IO 4, Zod validation, JWT (`jsonwebtoken`) + `bcryptjs`
 - Security: helmet, CORS allow-list, `express-rate-limit` (5 limiters), 16 KB body cap
 - Data layer: PostgreSQL via `pg` when `DATABASE_URL` is set, otherwise embedded Postgres ([PGlite](https://pglite.dev)) — same SQL either way
 - Deployment: Render (`render.yaml` blueprint included)
+
+## The three dashboards
+| Role | Look & feel | What it does |
+|---|---|---|
+| **Customer** (cobalt, light) | Calm, guided | Request form with a place picker + tap-to-pin map, live order cards with progress, tracking drawer (live rider marker, status timeline, rider card, per-order chat) |
+| **Rider** (emerald, dark-first) | "Dispatch" layout: list + live map | Nearby requests sorted by real distance, priority filters, tap/drag the map to move yourself (distances re-sort instantly), accept, active-delivery view with one-tap status progress, quick-reply chat, success celebration |
+| **Admin** (indigo, light) | Operations console | Animated stats, orders-per-hour chart, fleet map, orders table (search, filters, inline priority editor, expandable timeline), riders, users, live priority analytics |
+
+Design system highlights: light/dark themes, role accent colours, distinct status vs priority palettes (amber/red are
+reserved for priority), keyed list reconciliation with FLIP reordering (no flicker on live updates), skeleton loaders,
+animated steppers/timelines, `prefers-reduced-motion` support, fully responsive down to phones.
 
 ## Three Dashboard Architecture
 All dashboards talk to the same API and the same Postgres tables, so there is no duplicated state.
@@ -68,6 +80,7 @@ git clone <your-repo-url>
 cd logipulse
 npm install
 npm run dev          # http://localhost:3000  (embedded Postgres, demo data auto-seeded)
+npm run e2e          # drives the real UI in 3 browser tabs through the PRD's 9-step demo (needs Chrome; server must be running)
 npm test             # ~2 min: API, RBAC, race, chat scoping, sockets, every rate limiter, and the whole API suite again through the real `pg` driver
 ```
 Demo logins (all passwords `password123`): `user@logipulse.com`, `rider@logipulse.com`, `admin@logipulse.com`

@@ -1,10 +1,16 @@
 import { createServer } from 'node:http';
 import { pathToFileURL } from 'node:url';
+import dns from 'node:dns';
 import { config } from './config.js';
 import { initDb, closeDb } from './db.js';
 import { seedIfEmpty } from './db/seed.js';
 import { createApp } from './app.js';
 import { attachSockets } from './sockets/index.js';
+
+try {
+  dns.setDefaultResultOrder('ipv4first');
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch { /* ignore */ }
 
 // Boots DB -> seed -> Express -> Socket.IO. Returns handles so tests can start/stop on an ephemeral port.
 export async function start({ port = config.port } = {}) {
