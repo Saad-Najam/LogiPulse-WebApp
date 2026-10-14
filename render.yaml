@@ -1,0 +1,22 @@
+# Render blueprint: one web service (API + sockets + static frontend) and a free Postgres.
+services:
+  - type: web
+    name: logipulse
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: logipulse-db
+          property: connectionString
+
+databases:
+  - name: logipulse-db
+    plan: free
