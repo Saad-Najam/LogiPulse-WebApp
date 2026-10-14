@@ -16,7 +16,7 @@ export async function initDb() {
     const pool = new pg.Pool({
       connectionString: config.databaseUrl,
       ssl: config.databaseSsl ? { rejectUnauthorized: false } : undefined,
-      max: 10,
+      max: config.databasePoolMax,
     });
     impl = {
       kind: 'postgres',

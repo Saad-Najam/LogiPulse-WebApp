@@ -82,3 +82,13 @@ CREATE INDEX IF NOT EXISTS idx_orders_status_pending ON orders(id) WHERE status 
 CREATE INDEX IF NOT EXISTS idx_messages_order_id ON messages(order_id);
 CREATE INDEX IF NOT EXISTS idx_status_log_order ON order_status_log(order_id);
 CREATE INDEX IF NOT EXISTS idx_priority_log_order ON priority_change_log(order_id);
+
+-- Supabase exposes every public table through its REST API. Enabling RLS with NO policies locks that API out
+-- completely; this server connects as the table owner (postgres), which bypasses RLS, so it is unaffected.
+ALTER TABLE users               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE riders              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admins              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_status_log    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE priority_change_log ENABLE ROW LEVEL SECURITY;
