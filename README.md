@@ -132,4 +132,5 @@ with a plain-language fix instead of a raw driver error.
 1. Supabase: create a project, then **Connect → Session pooler** and copy the URI (the direct connection is IPv6-only and won't work from Render's free tier).
 2. Render: New → Blueprint (uses `render.yaml`) or New → Web Service. Set `DATABASE_URL` = the pooler URI, `DATABASE_SSL=true`; `JWT_SECRET` is generated for you. Optionally `DATABASE_POOL_MAX` (default 10).
 3. Tables, indexes and demo data are created on first boot. Row-level security is enabled on every table so Supabase's public REST API cannot read them; the server connects as `postgres`, which bypasses RLS.
-4. Demo reset (SQL editor): `TRUNCATE messages, order_status_log, priority_change_log, orders, users, riders, admins RESTART IDENTITY CASCADE;` then restart the service to re-seed.
+4. **Latency:** pick the Render region closest to your Supabase region (the `webforces` project is in Tokyo / `ap-northeast-1` -> choose **Singapore**). Each API call makes a DB round trip, so a far-away region makes the app feel slow.
+5. Demo reset (SQL editor): `TRUNCATE messages, order_status_log, priority_change_log, orders, users, riders, admins RESTART IDENTITY CASCADE;` then restart the service to re-seed.

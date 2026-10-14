@@ -3,7 +3,7 @@
 //   setup  - create tables (idempotent) and seed demo data if the database is empty
 //   reset  - TRUNCATE everything and re-seed (needs --yes). For resetting the demo before judging.
 import { config } from '../src/config.js';
-import { initDb, query, dbKind, closeDb } from '../src/db.js';
+import { initDb, query, closeDb } from '../src/db.js';
 import { seedIfEmpty } from '../src/db/seed.js';
 import { inspectDatabaseUrl } from '../src/lib/dbUrl.js';
 
@@ -21,10 +21,6 @@ async function check() {
   const { rows: [v] } = await query('SELECT version() AS v, current_user AS u, current_database() AS d');
   console.log('Server :', v.v.split(',')[0]);
   console.log('Login  :', `${v.u} @ ${v.d}`);
-  if (dbKind() === 'postgres') {
-    const { rows } = await query('SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()').catch(() => ({ rows: [] }));
-    if (rows[0]) console.log('TLS    :', rows[0].ssl ? 'yes' : 'NO (Supabase requires SSL)');
-  }
   const { rows: rls } = await query(
     `SELECT c.relname, c.relrowsecurity FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
      WHERE n.nspname = 'public' AND c.relname = ANY($1)`, [TABLES],
