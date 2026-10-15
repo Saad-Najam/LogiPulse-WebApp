@@ -520,6 +520,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           pickup_lat: orderData.pickupLat,
           pickup_lng: orderData.pickupLng,
           delivery_address: orderData.deliveryAddress,
+          delivery_lat: orderData.deliveryLat,
+          delivery_lng: orderData.deliveryLng,
           description: orderData.description || `Size: ${orderData.packageSize}`,
         }),
       })

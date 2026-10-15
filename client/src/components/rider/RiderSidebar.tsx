@@ -48,11 +48,18 @@ export const RiderSidebar: React.FC = () => {
       <div className="p-3 border-t border-[rgba(255,255,255,0.08)] bg-[#2f4436]">
         <div className="flex items-center gap-2.5">
           <div className="relative">
-            <div className="w-[28px] h-[28px] rounded-full bg-[rgba(255,255,255,0.10)] border border-[rgba(255,255,255,0.12)] flex items-center justify-center text-[11px] font-medium text-[#ecebe1]">AR</div>
+            <div className="w-[28px] h-[28px] rounded-full bg-[rgba(255,255,255,0.10)] border border-[rgba(255,255,255,0.12)] flex items-center justify-center text-[11px] font-medium text-[#ecebe1]">
+              {(currentUser?.name || 'Rider')
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()}
+            </div>
             <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-[#2f4436] ${isRiderOnline ? 'bg-[#2DB67D]' : 'bg-[rgba(236,235,225,0.25)]'}`} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-medium text-[#ecebe1] truncate leading-tight">{currentUser?.name || 'Ahmed Raza'}</div>
+            <div className="text-[13px] font-medium text-[#ecebe1] truncate leading-tight">{currentUser?.name || 'Courier Partner'}</div>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-[11px] px-1.5 py-0.2 rounded-[4px] border border-[#2DB67D] text-[#2DB67D] leading-none">Rider</span>
               <span className="text-[11px] font-mono text-[#ffd98a]">★ 4.9</span>

@@ -17,6 +17,15 @@ export const CustomerSidebar: React.FC<CustomerSidebarProps> = ({ collapsed = fa
     { id: 'chat', label: 'Rider Chat', icon: MessageSquare },
   ]
 
+  const customerName = currentUser?.name || 'Customer'
+  const customerInitials = customerName
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'CU'
+
   if (collapsed) {
     return (
       <aside className="w-[48px] h-screen bg-[#2f4436] border-r border-[rgba(255,255,255,0.08)] flex flex-col items-center py-3 flex-shrink-0 select-none justify-between">
@@ -54,10 +63,10 @@ export const CustomerSidebar: React.FC<CustomerSidebarProps> = ({ collapsed = fa
         </div>
         <div className="flex flex-col items-center gap-2">
           <div
-            title={currentUser?.name || 'Customer'}
+            title={customerName}
             className="w-7 h-7 rounded-full bg-[rgba(255,255,255,0.10)] border border-[rgba(255,255,255,0.10)] flex items-center justify-center text-[10px] text-[#ecebe1] font-medium"
           >
-            TK
+            {customerInitials}
           </div>
           <button
             onClick={logout}
@@ -112,11 +121,11 @@ export const CustomerSidebar: React.FC<CustomerSidebarProps> = ({ collapsed = fa
       <div className="p-3 border-t border-[rgba(255,255,255,0.10)] bg-[#2f4436]">
         <div className="flex items-center gap-2.5">
           <div className="w-[28px] h-[28px] rounded-full bg-[rgba(255,255,255,0.10)] border border-[rgba(255,255,255,0.10)] flex items-center justify-center text-[11px] font-medium text-[#ecebe1] flex-shrink-0">
-            TK
+            {customerInitials}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-medium text-[#ecebe1] truncate leading-tight">
-              {currentUser?.name || 'Tariq Khan'}
+              {customerName}
             </div>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-[11px] px-1.5 py-0.2 rounded-[3px] border border-[#ffd98a] text-[#ffd98a] leading-none">

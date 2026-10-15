@@ -26,7 +26,7 @@ import {
 import { OpenStreetMap } from '../common/OpenStreetMap'
 
 export const NewOrderForm: React.FC = () => {
-  const { createOrder, setCustomerView } = useApp()
+  const { createOrder, setCustomerView, setSelectedOrderId } = useApp()
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
 
   // Step 1: Location & Map state
@@ -190,12 +190,12 @@ export const NewOrderForm: React.FC = () => {
     )
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    setTimeout(() => {
-      createOrder({
+    try {
+      const created = await createOrder({
         pickupAddress: pickupLocation,
         pickupLat: pickupCoord.lat,
         pickupLng: pickupCoord.lng,
@@ -206,9 +206,16 @@ export const NewOrderForm: React.FC = () => {
         packageSize,
         priority,
       })
-      setIsSubmitting(false)
+      if (created && created.id) {
+        setSelectedOrderId(created.id)
+      }
       setCustomerView('tracking')
-    }, 450)
+    } catch (err) {
+      console.error('Order creation error:', err)
+      setCustomerView('tracking')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (

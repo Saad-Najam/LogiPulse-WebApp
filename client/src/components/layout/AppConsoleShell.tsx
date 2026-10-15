@@ -102,6 +102,19 @@ export const AppConsoleShell: React.FC<AppConsoleShellProps> = ({ children, onGo
     }
   }
 
+  const handleAdminAccess = () => {
+    setRoleSwitcherOpen(false)
+    setMenuOpen(false)
+    if (currentUser?.role === 'admin') return
+    const pass = window.prompt('Admin Verification Required\nEnter Administrator Password:')
+    if (!pass) return
+    if (pass === 'admin123' || pass === 'admin') {
+      login('admin', 'admin@logipulse.com', pass)
+    } else {
+      alert('Access Denied: Invalid administrator credentials.')
+    }
+  }
+
   const roleBadge = getRoleBadge(role)
 
   return (
@@ -176,7 +189,7 @@ export const AppConsoleShell: React.FC<AppConsoleShellProps> = ({ children, onGo
                   {[
                     { n: '01', label: 'Customer View', action: () => login('customer', 'customer@logipulse.com') },
                     { n: '02', label: 'Rider Console', action: () => login('rider', 'rider@logipulse.com') },
-                    { n: '03', label: 'Admin Command', action: () => login('admin', 'admin@logipulse.com') },
+                    { n: '03', label: 'Admin Command (Protected)', action: handleAdminAccess },
                   ].map((item, idx) => (
                     <li key={item.label} style={{ animationDelay: `${idx * 40}ms` }}>
                       <a
@@ -199,14 +212,13 @@ export const AppConsoleShell: React.FC<AppConsoleShellProps> = ({ children, onGo
                         e.preventDefault()
                         setMenuOpen(false)
                         if (onGoToLanding) {
-                          logout()
                           onGoToLanding()
                         }
                       }}
                       className="text-[#ffd98a]"
                     >
                       <span className="mfl-dd-n">04</span>
-                      ← Inspo Home Page
+                      ← LogiPulse Landing Page
                     </a>
                   </li>
                 </ul>
@@ -321,7 +333,7 @@ export const AppConsoleShell: React.FC<AppConsoleShellProps> = ({ children, onGo
                         : 'text-[#ecebe1]/80 hover:bg-[rgba(255,255,255,0.06)]'
                     }`}
                   >
-                    Customer View (Tariq)
+                    Customer Portal
                   </button>
                   <button
                     onClick={() => {
@@ -334,32 +346,28 @@ export const AppConsoleShell: React.FC<AppConsoleShellProps> = ({ children, onGo
                         : 'text-[#ecebe1]/80 hover:bg-[rgba(255,255,255,0.06)]'
                     }`}
                   >
-                    Rider Console (Ahmed)
+                    Rider Console
                   </button>
                   <button
-                    onClick={() => {
-                      login('admin', 'admin@logipulse.com')
-                      setRoleSwitcherOpen(false)
-                    }}
+                    onClick={handleAdminAccess}
                     className={`w-full text-left px-2.5 py-1.5 rounded-[4px] text-[12px] font-medium transition-colors cursor-pointer ${
                       role === 'admin'
                         ? 'bg-[#ffd98a] text-[#141a16]'
                         : 'text-[#ecebe1]/80 hover:bg-[rgba(255,255,255,0.06)]'
                     }`}
                   >
-                    Admin Operations (Sarah)
+                    Admin Operations (Protected)
                   </button>
                   <div className="h-[1px] bg-[rgba(255,255,255,0.08)] my-1" />
                   {onGoToLanding && (
                     <button
                       onClick={() => {
-                        logout()
                         setRoleSwitcherOpen(false)
                         onGoToLanding()
                       }}
                       className="w-full text-left px-2.5 py-1 rounded-[4px] text-[11px] text-[#ffd98a] hover:bg-[rgba(255,255,255,0.06)] cursor-pointer"
                     >
-                      ← Back to Inspo Home
+                      ← LogiPulse Landing Page
                     </button>
                   )}
                   <button
@@ -374,21 +382,6 @@ export const AppConsoleShell: React.FC<AppConsoleShellProps> = ({ children, onGo
                 </div>
               )}
             </div>
-
-            {/* Back to Landing pill */}
-            {onGoToLanding && (
-              <button
-                type="button"
-                onClick={() => {
-                  logout()
-                  onGoToLanding()
-                }}
-                className="mfl-btn mfl-btn--white mfl-btn--sm hidden sm:inline-flex shadow-sm"
-                title="Return to Inspo Home Page"
-              >
-                Landing
-              </button>
-            )}
 
             {/* Sign Out icon */}
             <button

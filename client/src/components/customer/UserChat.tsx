@@ -3,14 +3,20 @@ import { ArrowLeft, Send, CheckCheck, MapPin } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 
 export const UserChat: React.FC = () => {
-  const { messages, sendMessage, selectedOrderId, orders, setCustomerView } = useApp()
+  const { messages, sendMessage, selectedOrderId, orders, setCustomerView, currentUser } = useApp()
   const [inputText, setInputText] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  const relevantOrders = currentUser && currentUser.role === 'customer'
+    ? orders.filter((o) => String(o.userId) === String(currentUser.id))
+    : orders
+  const activeOrders = relevantOrders.filter((o) => o.status !== 'DELIVERED')
+
   const activeOrder =
-    orders.find((o) => o.id === selectedOrderId) ||
-    orders.find((o) => o.status === 'IN_TRANSIT') ||
-    orders[0]
+    relevantOrders.find((o) => o.id === selectedOrderId) ||
+    activeOrders.find((o) => o.status === 'IN_TRANSIT') ||
+    activeOrders[0] ||
+    relevantOrders[0]
 
   const orderMessages = messages.filter(
     (m) => m.orderId === (activeOrder?.id || 'ord_101')

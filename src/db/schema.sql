@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS orders (
   pickup_lat       DOUBLE PRECISION NOT NULL,
   pickup_lng       DOUBLE PRECISION NOT NULL,
   delivery_address VARCHAR(300) NOT NULL,
+  delivery_lat     DOUBLE PRECISION,
+  delivery_lng     DOUBLE PRECISION,
   description      TEXT,
   status           order_status DEFAULT 'PENDING',
   priority         order_priority DEFAULT 'NORMAL',    -- Day 2 feature, in the schema from Day 1

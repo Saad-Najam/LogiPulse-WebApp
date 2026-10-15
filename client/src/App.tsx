@@ -71,7 +71,20 @@ const AdminApp: React.FC<{ onGoToLanding: () => void }> = ({ onGoToLanding }) =>
 const MainAppRouter: React.FC = () => {
   const { currentUser } = useApp()
   const [authView, setAuthView] = useState<'signin' | 'register' | null>(null)
+  
+  // Persisted view mode so refresh (F5) keeps user in app dashboard
+  const [viewMode, setViewModeState] = useState<'app' | 'landing'>(() => {
+    const saved = localStorage.getItem('lp_view_mode')
+    if (saved === 'landing') return 'landing'
+    return 'app'
+  })
 
+  const setViewMode = (mode: 'app' | 'landing') => {
+    localStorage.setItem('lp_view_mode', mode)
+    setViewModeState(mode)
+  }
+
+  // If user is not logged in:
   if (!currentUser) {
     if (authView) {
       return (
@@ -90,7 +103,19 @@ const MainAppRouter: React.FC = () => {
     return (
       <div className="relative">
         <InspoLanding
-          onEnterApp={() => {}}
+          onEnterApp={() => setAuthView('signin')}
+          onOpenAuth={(mode) => setAuthView(mode)}
+        />
+      </div>
+    )
+  }
+
+  // If user is logged in but navigated to landing page via logipulse logo:
+  if (viewMode === 'landing') {
+    return (
+      <div className="relative">
+        <InspoLanding
+          onEnterApp={() => setViewMode('app')}
           onOpenAuth={(mode) => setAuthView(mode)}
         />
       </div>
@@ -98,7 +123,7 @@ const MainAppRouter: React.FC = () => {
   }
 
   const handleGoToLanding = () => {
-    setAuthView(null)
+    setViewMode('landing')
   }
 
   switch (currentUser.role) {
@@ -109,7 +134,7 @@ const MainAppRouter: React.FC = () => {
     case 'admin':
       return <AdminApp onGoToLanding={handleGoToLanding} />
     default:
-      return <InspoLanding onEnterApp={() => {}} />
+      return <CustomerApp onGoToLanding={handleGoToLanding} />
   }
 }
 

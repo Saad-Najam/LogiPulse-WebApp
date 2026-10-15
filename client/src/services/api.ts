@@ -100,8 +100,12 @@ export function mapBackendOrder(b: any): Order {
     pickupLat: Number(b.pickup_lat),
     pickupLng: Number(b.pickup_lng),
     deliveryAddress: b.delivery_address,
-    deliveryLat: Number(b.delivery_lat || 24.8607),
-    deliveryLng: Number(b.delivery_lng || 67.0011),
+    deliveryLat: b.delivery_lat != null && !isNaN(Number(b.delivery_lat))
+      ? Number(b.delivery_lat)
+      : Number(b.pickup_lat || 24.8607) - 0.02,
+    deliveryLng: b.delivery_lng != null && !isNaN(Number(b.delivery_lng))
+      ? Number(b.delivery_lng)
+      : Number(b.pickup_lng || 67.0011) - 0.02,
     description: b.description || '',
     packageSize: (b.package_size as any) || 'Medium',
     priority: (b.priority as PriorityLevel) || 'NORMAL',

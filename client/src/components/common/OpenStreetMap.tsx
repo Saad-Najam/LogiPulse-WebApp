@@ -20,6 +20,7 @@ interface OpenStreetMapProps {
   pickup?: { lat: number; lng: number; label?: string }
   delivery?: { lat: number; lng: number; label?: string }
   courier?: { lat: number; lng: number; label?: string; isLive?: boolean }
+  routeCoordinates?: [number, number][]
   markers?: MapMarkerItem[]
   showRoute?: boolean
   interactive?: boolean
@@ -34,6 +35,7 @@ export const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
   pickup,
   delivery,
   courier,
+  routeCoordinates,
   markers = [],
   showRoute = true,
   interactive = true,
@@ -111,7 +113,7 @@ export const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
     layerGroup.clearLayers()
     const boundsPoints: [number, number][] = []
 
-    // Helper: Create HTML div icon
+    // Helper: Create HTML div icon with pixel-perfect bottom anchor (16, 42)
     const createCustomIcon = (
       bgColor: string,
       textColor: string,
@@ -121,40 +123,12 @@ export const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
       return L.divIcon({
         className: 'custom-leaflet-marker',
         html: `
-          <div style="
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transform: translate(-50%, -100%);
-          ">
-            <div style="
-              width: 32px;
-              height: 32px;
-              border-radius: 50% 50% 50% 0;
-              background: ${bgColor};
-              transform: rotate(-45deg);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              box-shadow: 0 4px 10px rgba(0,0,0,0.35)${glow ? ', 0 0 15px ' + bgColor : ''};
-              border: 2px solid #ffffff;
-            ">
-              <span style="
-                transform: rotate(45deg);
-                font-family: 'JetBrains Mono', monospace;
-                font-size: 13px;
-                font-weight: bold;
-                color: ${textColor};
-              ">${symbol}</span>
-            </div>
-            <div style="
-              width: 6px;
-              height: 6px;
-              border-radius: 50%;
-              background: rgba(0,0,0,0.4);
-              margin-top: 2px;
-            "></div>
+          <div style="width: 32px; height: 42px; position: relative;">
+            <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 3px 5px rgba(0,0,0,0.4))${glow ? ' drop-shadow(0 0 10px ' + bgColor + ')' : ''};">
+              <path d="M16 42C16 42 30 25.5 30 16C30 7.16344 23.732 0 16 0C8.26801 0 2 7.16344 2 16C2 25.5 16 42 16 42Z" fill="${bgColor}" stroke="#ffffff" stroke-width="2"/>
+              <circle cx="16" cy="16" r="9" fill="#ffffff" fill-opacity="0.95"/>
+              <text x="16" y="20.5" font-family="'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="bold" fill="${textColor}" text-anchor="middle">${symbol}</text>
+            </svg>
           </div>
         `,
         iconSize: [32, 42],
@@ -203,20 +177,34 @@ export const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
       `)
     }
 
-    // Draw Route Polyline
+    // Draw Route Polyline (Prefer detailed real road routeCoordinates, fallback to direct points)
     if (showRoute) {
-      const routeCoords: [number, number][] = []
-      if (pickup && pickup.lat && pickup.lng) routeCoords.push([pickup.lat, pickup.lng])
-      if (courier && courier.lat && courier.lng) routeCoords.push([courier.lat, courier.lng])
-      if (delivery && delivery.lat && delivery.lng) routeCoords.push([delivery.lat, delivery.lng])
-
-      if (routeCoords.length >= 2) {
-        L.polyline(routeCoords, {
-          color: '#2f5640',
-          weight: 4,
-          opacity: 0.85,
-          dashArray: '8, 6',
+      if (routeCoordinates && routeCoordinates.length >= 2) {
+        // High-contrast Google Maps style road polyline
+        L.polyline(routeCoordinates, {
+          color: '#1c3d28',
+          weight: 6,
+          opacity: 0.95,
         }).addTo(layerGroup)
+        L.polyline(routeCoordinates, {
+          color: '#2DB67D',
+          weight: 3.5,
+          opacity: 1,
+        }).addTo(layerGroup)
+      } else {
+        const routeCoords: [number, number][] = []
+        if (pickup && pickup.lat && pickup.lng) routeCoords.push([pickup.lat, pickup.lng])
+        if (courier && courier.lat && courier.lng) routeCoords.push([courier.lat, courier.lng])
+        if (delivery && delivery.lat && delivery.lng) routeCoords.push([delivery.lat, delivery.lng])
+
+        if (routeCoords.length >= 2) {
+          L.polyline(routeCoords, {
+            color: '#2f5640',
+            weight: 4,
+            opacity: 0.85,
+            dashArray: '8, 6',
+          }).addTo(layerGroup)
+        }
       }
     }
 
@@ -254,13 +242,19 @@ export const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
       }
     }
 
+    if (routeCoordinates && routeCoordinates.length > 0) {
+      for (const pt of routeCoordinates) {
+        boundsPoints.push(pt)
+      }
+    }
+
     // Auto fit bounds
     if (boundsPoints.length > 1) {
       map.fitBounds(L.latLngBounds(boundsPoints), { padding: [40, 40], maxZoom: 14 })
     } else if (boundsPoints.length === 1) {
       map.setView(boundsPoints[0], Math.max(map.getZoom(), 13))
     }
-  }, [pickup, delivery, courier, markers, showRoute])
+  }, [pickup, delivery, courier, markers, showRoute, routeCoordinates])
 
   return (
     <div

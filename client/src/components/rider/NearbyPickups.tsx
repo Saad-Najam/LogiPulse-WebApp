@@ -1,9 +1,26 @@
-import React, { useState } from 'react'
-import { Compass, MapPin, Navigation, Layers, Radio } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import {
+  Compass,
+  MapPin,
+  Navigation,
+  Layers,
+  Radio,
+  Clock,
+  ArrowRight,
+  Sparkles,
+  Zap,
+  CheckCircle2,
+  Package,
+} from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import { haversineDistance, estimateTimeMinutes, KARACHI_LOCATIONS } from '../../utils/haversine'
+import {
+  haversineDistance,
+  estimateTimeMinutes,
+  KARACHI_LOCATIONS,
+} from '../../utils/haversine'
 import { PriorityLevel } from '../../types'
 import { OpenStreetMap } from '../common/OpenStreetMap'
+import { apiFetch, mapBackendOrder } from '../../services/api'
 
 export const NearbyPickups: React.FC = () => {
   const {
@@ -14,14 +31,42 @@ export const NearbyPickups: React.FC = () => {
     setRiderView,
     isLiveGpsActive,
     toggleDeviceGps,
+    currentUser,
   } = useApp()
 
   const [filterPriority, setFilterPriority] = useState<PriorityLevel | 'ALL'>('ALL')
   const [showLocationPicker, setShowLocationPicker] = useState(false)
   const [displayMode, setDisplayMode] = useState<'map' | 'radar'>('map')
+  const [liveOrders, setLiveOrders] = useState(orders)
+
+  // Auto-poll available orders every 2.5s so rides show up in real-time with zero page refresh!
+  useEffect(() => {
+    let active = true
+
+    const fetchLiveAvailable = async () => {
+      try {
+        const res = await apiFetch<any[]>('/api/orders/available')
+        if (active && Array.isArray(res)) {
+          const mapped = res.map(mapBackendOrder)
+          setLiveOrders(mapped)
+        }
+      } catch {
+        // Fallback to context orders
+        if (active) setLiveOrders(orders)
+      }
+    }
+
+    fetchLiveAvailable()
+    const timer = setInterval(fetchLiveAvailable, 2500)
+
+    return () => {
+      active = false
+      clearInterval(timer)
+    }
+  }, [orders])
 
   // Real Haversine distance calculations
-  const availableOrders = orders
+  const availableOrders = (liveOrders.length > 0 ? liveOrders : orders)
     .filter((o) => o.status === 'PENDING')
     .filter((o) => filterPriority === 'ALL' || o.priority === filterPriority)
     .map((order) => {
@@ -35,6 +80,7 @@ export const NearbyPickups: React.FC = () => {
         ...order,
         calculatedDistance: Math.round(dist * 10) / 10,
         estimateTime: estimateTimeMinutes(dist),
+        estimatedFare: Math.max(250, Math.round(dist * 45 + 180)),
       }
     })
     .sort((a, b) => a.calculatedDistance - b.calculatedDistance)
@@ -62,18 +108,24 @@ export const NearbyPickups: React.FC = () => {
       <section className="px-6 md:px-10 py-5 border-b border-[rgba(20,26,22,0.08)] bg-gradient-to-b from-[#e0dfd4] to-[#e5e4da] flex-shrink-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="mfl-backer mb-2">
-              <span className="mfl-backer-mark">✓</span>
-              <b>Proximity Radar Engine</b>
-              <span className="text-[#7f857b]">· 10km Haversine Scan</span>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="mfl-backer">
+                <span className="mfl-backer-mark">✓</span>
+                <b>Real-Time Dispatch Radar</b>
+                <span className="text-[#7f857b]">· Karachi Grid Live Stream</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-[4px] bg-[#2DB67D]/15 text-[#2DB67D] font-mono text-[11px] font-bold tracking-wider flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#2DB67D] animate-ping" />
+                LIVE SYNC
+              </span>
             </div>
 
             <h1 className="text-[26px] sm:text-[34px] font-normal tracking-[-0.04em] text-[#141a16] leading-tight">
-              <span className="text-[#7f857b]">Available Pickups / </span>
+              <span className="text-[#7f857b]">Available Pickups · </span>
               <span>Nearby Karachi Dispatches</span>
             </h1>
             <p className="text-[12.5px] text-[#7f857b] mt-1 font-mono">
-              Current Origin: <span className="font-semibold text-[#141a16]">{riderLocation.name}</span>
+              Current Location: <span className="font-semibold text-[#141a16]">{riderLocation.name}</span>
             </p>
           </div>
 
@@ -105,7 +157,7 @@ export const NearbyPickups: React.FC = () => {
               }`}
             >
               <Navigation size={12} className={isLiveGpsActive ? 'text-white animate-pulse' : 'text-[#2DB67D]'} />
-              <span>{isLiveGpsActive ? '● GPS Streaming Live' : 'Use Device GPS'}</span>
+              <span>{isLiveGpsActive ? '● GPS Streaming' : 'Use Device GPS'}</span>
             </button>
 
             <button
@@ -148,235 +200,182 @@ export const NearbyPickups: React.FC = () => {
         )}
       </section>
 
-      {/* TWO COLUMN WORKSPACE (55% Left Orders, 45% Right Night Radar Console) */}
+      {/* TWO COLUMN WORKSPACE (Available Orders List + Map / Radar) */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        
-        {/* Left Column (55% width) — Available Orders List */}
+        {/* Left Column (55% width) — High-Tech Available Orders Cards */}
         <div className="w-full md:w-[55%] h-full overflow-y-auto p-6 flex flex-col gap-4 border-r border-[rgba(20,26,22,0.10)]">
+          <div className="flex items-center justify-between pb-2 border-b border-[rgba(20,26,22,0.08)]">
+            <span className="font-mono text-[12px] font-bold text-[#141a16] uppercase tracking-wider flex items-center gap-1.5">
+              <Package size={14} className="text-[#2f5640]" />
+              Available Dispatches ({availableOrders.length})
+            </span>
+            <span className="text-[11px] font-mono text-[#7f857b]">
+              Auto-updating via live socket
+            </span>
+          </div>
+
           {availableOrders.length === 0 ? (
             <div className="bg-[#fbfaf7] border border-[rgba(20,26,22,0.10)] rounded-[8px] p-12 text-center text-[#7f857b] my-auto">
-              <Compass size={24} className="text-[#7f857b] mx-auto mb-2" />
-              <div className="text-[14px] font-bold text-[#141a16]">No nearby pickups detected</div>
+              <Compass size={28} className="text-[#7f857b] mx-auto mb-2 animate-spin" />
+              <div className="text-[14px] font-bold text-[#141a16]">
+                Scanning Karachi Corridor...
+              </div>
               <p className="text-[12px] text-[#7f857b] mt-1">
-                There are no orders matching this filter within the 10km radar scan.
+                Waiting for incoming customer dispatch requests. New orders appear automatically without refresh.
               </p>
             </div>
           ) : (
             availableOrders.map((order, idx) => {
               const isNearest = idx === 0
               const isUrgent = order.priority === 'URGENT'
+              const isHigh = order.priority === 'HIGH'
               const badge = getPriorityBadgeStyle(order.priority)
 
               return (
                 <div
                   key={order.id}
-                  className={`w-full bg-[#fbfaf7] border rounded-[8px] p-4.5 flex flex-col gap-3 shadow-sm hover:shadow-md transition-all ${
+                  className={`w-full bg-[#fbfaf7] border rounded-[10px] p-5 flex flex-col gap-3.5 shadow-sm hover:shadow-md transition-all ${
                     isUrgent
-                      ? 'border-[#C94040]/40 ring-1 ring-[#C94040]/20'
+                      ? 'border-[#C94040] ring-1 ring-[#C94040]/30 bg-gradient-to-br from-[#fbfaf7] to-[#fff6f6]'
+                      : isHigh
+                      ? 'border-[#D4920A]/60 bg-gradient-to-br from-[#fbfaf7] to-[#fffdf5]'
                       : 'border-[rgba(20,26,22,0.12)]'
                   }`}
                 >
-                  {/* Top row */}
+                  {/* Top Bar: ID, Priority, Fare */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[12.5px] font-bold text-[#2f5640] bg-[#2f5640]/8 px-2 py-0.5 rounded">
+                      <span className="font-mono text-[13px] font-extrabold text-[#2f5640] bg-[#2f5640]/10 px-2 py-0.5 rounded">
                         {order.displayId}
                       </span>
                       <span
-                        className="px-2 py-0.5 rounded-[3px] font-mono text-[10px] font-bold uppercase shadow-2xs"
+                        className="px-2 py-0.5 rounded-[3px] font-mono text-[10.5px] font-bold uppercase shadow-2xs"
                         style={{ backgroundColor: badge.bg, color: badge.text }}
                       >
                         {order.priority}
                       </span>
+                      {isNearest && (
+                        <span className="font-mono text-[10px] uppercase text-[#2DB67D] bg-[#2DB67D]/12 px-2 py-0.5 rounded font-extrabold tracking-wider border border-[#2DB67D]/25">
+                          ★ CLOSEST
+                        </span>
+                      )}
                     </div>
 
-                    {isNearest && (
-                      <span className="font-mono text-[10.5px] uppercase text-[#2DB67D] bg-[#2DB67D]/12 px-2 py-0.5 rounded font-extrabold tracking-wider">
-                        ★ NEAREST TO YOU
+                    <div className="text-right">
+                      <span className="font-mono text-[15px] font-extrabold text-[#2DB67D]">
+                        PKR {order.estimatedFare}
                       </span>
-                    )}
-                  </div>
-
-                  {/* Route details */}
-                  <div className="text-[12.5px]">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#2f5640]" />
-                      <span className="text-[#7f857b] font-mono text-[10.5px]">FROM:</span>
-                      <span className="text-[#141a16] font-semibold">{order.pickupAddress}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="w-2 h-2 rounded-full bg-[#2DB67D]" />
-                      <span className="text-[#7f857b] font-mono text-[10.5px]">TO:</span>
-                      <span className="text-[#7f857b]">{order.deliveryAddress}</span>
+                      <span className="block text-[9.5px] font-mono text-[#7f857b] uppercase">
+                        Est. Payout
+                      </span>
                     </div>
                   </div>
 
-                  {/* Distance hero element */}
-                  <div className="pt-2.5 border-t border-[rgba(20,26,22,0.08)] flex items-baseline justify-between">
-                    <div>
-                      <div className="font-mono text-[20px] font-bold text-[#2DB67D] leading-none">
-                        {order.calculatedDistance} km away
-                      </div>
-                      <div className="text-[11px] text-[#7f857b] mt-1 font-mono">
-                        {order.estimateTime} travel time
+                  {/* Route corridor details */}
+                  <div className="bg-[#f5f4ef] rounded-[6px] p-3 flex flex-col gap-2 border border-[rgba(20,26,22,0.06)]">
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#2f5640] mt-1 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-mono uppercase text-[#7f857b] block">
+                          Pickup Location
+                        </span>
+                        <span className="text-[13px] font-semibold text-[#141a16] block truncate">
+                          {order.pickupAddress}
+                        </span>
                       </div>
                     </div>
-
-                    <span className="text-[11.5px] font-mono text-[#7f857b] bg-[#eeede6] px-2 py-0.5 rounded">
-                      {order.packageSize} Parcel
-                    </span>
+                    <div className="w-[1px] h-2 bg-[#2f5640]/30 ml-1" />
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#2DB67D] mt-1 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-mono uppercase text-[#7f857b] block">
+                          Drop-off Destination
+                        </span>
+                        <span className="text-[13px] font-semibold text-[#7f857b] block truncate">
+                          {order.deliveryAddress}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Accept Button */}
-                  <button
-                    type="button"
-                    onClick={() => handleAccept(order.id)}
-                    className="mfl-btn mfl-btn--brand mfl-btn--wide mt-1 shadow-sm cursor-pointer"
-                  >
-                    Accept Dispatch
-                  </button>
+                  {/* Metrics and Action */}
+                  <div className="pt-2 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 text-[12px] font-mono">
+                      <div>
+                        <span className="text-[#7f857b] text-[10px] uppercase block">
+                          Proximity
+                        </span>
+                        <span className="font-bold text-[#141a16]">
+                          {order.calculatedDistance} km
+                        </span>
+                      </div>
+                      <div className="w-[1px] h-5 bg-[rgba(20,26,22,0.10)]" />
+                      <div>
+                        <span className="text-[#7f857b] text-[10px] uppercase block">
+                          Est. Transit
+                        </span>
+                        <span className="font-bold text-[#2f5640]">
+                          {order.estimateTime}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAccept(order.id)}
+                      className={`h-[38px] px-5 rounded-[5px] font-mono text-[12.5px] font-bold shadow-sm transition-all cursor-pointer flex items-center gap-2 ${
+                        isUrgent
+                          ? 'bg-[#C94040] hover:bg-[#a93030] text-white'
+                          : 'bg-[#2f5640] hover:bg-[#254533] text-white'
+                      }`}
+                    >
+                      <Zap size={14} />
+                      <span>Accept Delivery</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
                 </div>
               )
             })
           )}
         </div>
 
-        {/* Right Column (48% width) — Interactive OpenStreetMap / Radar Console */}
-        <div className="w-full md:w-[48%] h-full p-4 md:p-6 flex flex-col justify-center items-center bg-[#e5e4da]">
-          <div className="w-full max-w-[460px] bg-[#121d17] border border-[rgba(255,255,255,0.12)] rounded-[12px] p-5 shadow-2xl flex flex-col relative overflow-hidden">
-            
-            {/* Header with Mode Switcher */}
-            <div className="w-full flex items-center justify-between mb-3 z-10">
-              <div className="flex items-center gap-2">
-                <span className="mfl-live" />
-                <span className="font-mono text-[11.5px] uppercase text-[#ffd98a] font-bold tracking-wider">
-                  {displayMode === 'map' ? 'OpenStreetMap Karachi Radar' : 'Radar Console'}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-1 bg-[#1c2c22] p-0.5 rounded-[4px] border border-[rgba(255,255,255,0.10)]">
-                <button
-                  type="button"
-                  onClick={() => setDisplayMode('map')}
-                  className={`px-2 py-0.5 rounded-[3px] text-[10px] font-mono cursor-pointer transition-all ${
-                    displayMode === 'map' ? 'bg-[#2DB67D] text-white font-bold' : 'text-[#ecebe1]/60 hover:text-[#ecebe1]'
-                  }`}
-                >
-                  Map
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDisplayMode('radar')}
-                  className={`px-2 py-0.5 rounded-[3px] text-[10px] font-mono cursor-pointer transition-all ${
-                    displayMode === 'radar' ? 'bg-[#2DB67D] text-white font-bold' : 'text-[#ecebe1]/60 hover:text-[#ecebe1]'
-                  }`}
-                >
-                  Radar
-                </button>
-              </div>
+        {/* Right Column (45% width) — Interactive OpenStreetMap Radar */}
+        <div className="w-full md:w-[45%] h-full flex flex-col bg-[#121d17] border-t md:border-t-0 md:border-l border-[rgba(255,255,255,0.08)] relative">
+          <div className="p-3 bg-[#1c2c22] border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between text-[#ecebe1] text-[11px] font-mono z-10">
+            <div className="flex items-center gap-2">
+              <span className="mfl-live" />
+              <span className="font-bold text-[#ffd98a] uppercase">
+                OpenStreetMap Karachi Radar
+              </span>
             </div>
+            <span>{availableOrders.length} pending pickup points</span>
+          </div>
 
-            {displayMode === 'map' ? (
-              <div className="w-full flex flex-col gap-2">
-                <OpenStreetMap
-                  height="300px"
-                  center={[riderLocation.lat, riderLocation.lng]}
-                  zoom={12}
-                  courier={{
-                    lat: riderLocation.lat,
-                    lng: riderLocation.lng,
-                    label: `YOU (${riderLocation.name})`,
-                    isLive: isLiveGpsActive,
-                  }}
-                  markers={availableOrders.map((ord) => ({
-                    id: ord.id,
-                    lat: ord.pickupLat,
-                    lng: ord.pickupLng,
-                    label: `${ord.displayId} (${ord.calculatedDistance} km)`,
-                    sublabel: ord.pickupAddress,
-                    priority: ord.priority,
-                    type: 'pickup',
-                    onClick: () => handleAccept(ord.id),
-                  }))}
-                  showRoute={false}
-                />
-                <div className="flex items-center justify-between px-1 text-[11px] font-mono text-[#ecebe1]/70">
-                  <span>● Yellow: You · Pins: Pickups</span>
-                  <span className="text-[#ffd98a]">{availableOrders.length} nearby dispatches</span>
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* Radar Canvas with concentric rings */}
-                <div className="w-[280px] h-[280px] mx-auto rounded-full border border-[rgba(255,255,255,0.14)] relative flex items-center justify-center bg-[#1c2c22]/50 shadow-inner">
-                  
-                  {/* 5km Ring */}
-                  <div className="w-[180px] h-[180px] rounded-full border border-[rgba(255,255,255,0.12)] absolute flex items-center justify-center">
-                    {/* 2km Ring */}
-                    <div className="w-[90px] h-[90px] rounded-full border border-[rgba(255,255,255,0.10)] absolute" />
-                  </div>
-
-                  {/* Crosshairs */}
-                  <div className="w-full h-[1px] bg-[rgba(255,255,255,0.06)] absolute" />
-                  <div className="h-full w-[1px] bg-[rgba(255,255,255,0.06)] absolute" />
-
-                  {/* Range labels */}
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[9px] text-[#ecebe1]/40">10km</span>
-                  <span className="absolute right-[52px] top-1/2 -translate-y-1/2 font-mono text-[9px] text-[#ecebe1]/40">5km</span>
-                  <span className="absolute right-[96px] top-1/2 -translate-y-1/2 font-mono text-[9px] text-[#ecebe1]/40">2km</span>
-
-                  {/* Center Rider Position */}
-                  <div className="relative z-20 flex flex-col items-center">
-                    <div className="w-3 h-3 rounded-full bg-[#2DB67D] shadow-[0_0_12px_#2DB67D] border-2 border-white" />
-                    <span className="text-[9.5px] font-mono text-[#2DB67D] mt-1 font-bold">
-                      YOU
-                    </span>
-                  </div>
-
-                  {/* Order Radar Blips */}
-                  {availableOrders.slice(0, 6).map((ord, idx) => {
-                    const angle = (idx * 65 + 35) * (Math.PI / 180)
-                    const distanceFactor = Math.min(10, ord.calculatedDistance) / 10
-                    const radius = distanceFactor * 120 + 15
-                    const x = Math.cos(angle) * radius
-                    const y = Math.sin(angle) * radius
-
-                    const pinColor =
-                      ord.priority === 'URGENT'
-                        ? '#C94040'
-                        : ord.priority === 'HIGH'
-                        ? '#ffd98a'
-                        : '#2DB67D'
-
-                    return (
-                      <div
-                        key={ord.id}
-                        style={{ transform: `translate(${x}px, ${y}px)` }}
-                        className="absolute z-30 flex items-center gap-1 group cursor-pointer"
-                        title={`${ord.displayId} (${ord.calculatedDistance} km)`}
-                      >
-                        <div
-                          style={{ backgroundColor: pinColor }}
-                          className="w-2.5 h-2.5 rounded-full shadow-sm animate-pulse"
-                        />
-                        <span className="font-mono text-[9px] text-[#ecebe1] bg-[#121d17]/90 px-1 py-0.2 rounded border border-[rgba(255,255,255,0.12)]">
-                          {ord.displayId}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                <div className="mt-4 text-center">
-                  <span className="text-[11.5px] text-[#ecebe1]/70 font-mono">
-                    {availableOrders.length} orders within current dispatch sector
-                  </span>
-                </div>
-              </>
-            )}
+          <div className="flex-1 relative">
+            <OpenStreetMap
+              height="100%"
+              center={[riderLocation.lat, riderLocation.lng]}
+              zoom={13}
+              courier={{
+                lat: riderLocation.lat,
+                lng: riderLocation.lng,
+                label: `${currentUser?.name || 'You'} (${riderLocation.name})`,
+                isLive: true,
+              }}
+              markers={availableOrders.map((o) => ({
+                id: o.id,
+                lat: o.pickupLat,
+                lng: o.pickupLng,
+                label: `${o.displayId} (${o.calculatedDistance} km away)`,
+                sublabel: `${o.pickupAddress} · ${o.priority}`,
+                priority: o.priority,
+                type: 'pickup' as const,
+              }))}
+              interactive={true}
+            />
           </div>
         </div>
-
       </div>
     </div>
   )

@@ -18,6 +18,8 @@ const createSchema = z.object({
   pickup_lat: z.number().min(-90).max(90),
   pickup_lng: z.number().min(-180).max(180),
   delivery_address: z.string().trim().min(5).max(300),
+  delivery_lat: z.number().min(-90).max(90).optional(),
+  delivery_lng: z.number().min(-180).max(180).optional(),
   description: z.string().trim().max(500).optional(),
 });
 
@@ -40,9 +42,18 @@ router.post('/', requireRole('user'), createOrderLimiter, validate(createSchema)
   const b = req.body;
   const id = await withTransaction(async (db) => {
     const { rows } = await db.query(
-      `INSERT INTO orders (user_id, pickup_address, pickup_lat, pickup_lng, delivery_address, description, status, priority)
-       VALUES ($1,$2,$3,$4,$5,$6,'PENDING','NORMAL') RETURNING id`,
-      [req.user.id, b.pickup_address, b.pickup_lat, b.pickup_lng, b.delivery_address, b.description ?? null],
+      `INSERT INTO orders (user_id, pickup_address, pickup_lat, pickup_lng, delivery_address, delivery_lat, delivery_lng, description, status, priority)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'PENDING','NORMAL') RETURNING id`,
+      [
+        req.user.id,
+        b.pickup_address,
+        b.pickup_lat,
+        b.pickup_lng,
+        b.delivery_address,
+        b.delivery_lat ?? null,
+        b.delivery_lng ?? null,
+        b.description ?? null,
+      ],
     );
     await db.query(`INSERT INTO order_status_log (order_id, status) VALUES ($1,'PENDING')`, [rows[0].id]);
     return rows[0].id;

@@ -66,7 +66,7 @@ export const InspoLanding: React.FC<{
   onEnterApp?: (role?: Role) => void
   onOpenAuth?: (mode: 'signin' | 'register') => void
 }> = ({ onEnterApp, onOpenAuth }) => {
-  const { login } = useApp()
+  const { currentUser, logout, login } = useApp()
   const uid = useId().replace(/:/g, '')
   const colors = PALETTES.forest
 
@@ -282,20 +282,42 @@ export const InspoLanding: React.FC<{
 
         {/* TOP RIGHT NAV BUTTONS */}
         <div className="mfl-nav-r">
-          <button
-            type="button"
-            className="mfl-btn mfl-btn--brand mfl-btn--sm"
-            onClick={() => (onOpenAuth ? onOpenAuth('register') : setModalOpen(true))}
-          >
-            Create Account
-          </button>
-          <button
-            type="button"
-            className="mfl-btn mfl-btn--white mfl-btn--sm"
-            onClick={() => (onOpenAuth ? onOpenAuth('signin') : setModalOpen(true))}
-          >
-            Sign In
-          </button>
+          {currentUser ? (
+            <>
+              <button
+                type="button"
+                className="mfl-btn mfl-btn--brand mfl-btn--sm flex items-center gap-1.5 cursor-pointer shadow-sm"
+                onClick={() => onEnterApp?.(currentUser.role)}
+              >
+                <span>Go to Dashboard</span>
+                <span className="font-mono text-[11px] opacity-80">({currentUser.name.split(' ')[0]})</span>
+              </button>
+              <button
+                type="button"
+                className="mfl-btn mfl-btn--white mfl-btn--sm cursor-pointer shadow-sm"
+                onClick={logout}
+              >
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="mfl-btn mfl-btn--brand mfl-btn--sm"
+                onClick={() => (onOpenAuth ? onOpenAuth('register') : setModalOpen(true))}
+              >
+                Create Account
+              </button>
+              <button
+                type="button"
+                className="mfl-btn mfl-btn--white mfl-btn--sm"
+                onClick={() => (onOpenAuth ? onOpenAuth('signin') : setModalOpen(true))}
+              >
+                Sign In
+              </button>
+            </>
+          )}
         </div>
       </nav>
 
