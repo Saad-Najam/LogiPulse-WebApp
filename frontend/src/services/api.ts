@@ -10,6 +10,8 @@ import {
 } from '../types';
 import { haversineDistance, estimateTimeMinutes } from '../utils/haversine';
 
+export const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
+
 const TOKEN_KEY = 'lp_token';
 const AUTH_USER_KEY = 'lp_user';
 
@@ -57,7 +59,11 @@ export async function apiFetch<T = any>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(path, {
+  const url = path.startsWith('http')
+    ? path
+    : `${API_URL}${path.startsWith('/') ? path : `/${path}`}`;
+
+  const response = await fetch(url, {
     ...options,
     headers,
   });
@@ -172,7 +178,7 @@ let socket: Socket | null = null;
 export function getSocket(): Socket {
   if (!socket) {
     const token = getStoredToken();
-    socket = io(window.location.origin, {
+    socket = io(API_URL || window.location.origin, {
       auth: { token },
       autoConnect: false,
     });
@@ -184,7 +190,7 @@ export function connectSocket(token: string): Socket {
   if (socket) {
     socket.disconnect();
   }
-  socket = io(window.location.origin, {
+  socket = io(API_URL || window.location.origin, {
     auth: { token },
   });
   return socket;

@@ -24,6 +24,7 @@ import {
   estimateTimeMinutes,
 } from '../../utils/haversine'
 import { OpenStreetMap } from '../common/OpenStreetMap'
+import { API_URL } from '../../services/api'
 
 export const NewOrderForm: React.FC = () => {
   const { createOrder, setCustomerView, setSelectedOrderId } = useApp()
@@ -88,7 +89,7 @@ export const NewOrderForm: React.FC = () => {
     setIsSearching(true)
     searchTimeoutRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/locations/search?q=${encodeURIComponent(val.trim())}`)
+        const res = await fetch(`${API_URL}/api/locations/search?q=${encodeURIComponent(val.trim())}`)
         if (res.ok) {
           const data = await res.json()
           setSearchResults(data)
@@ -132,7 +133,7 @@ export const NewOrderForm: React.FC = () => {
     }
 
     try {
-      const res = await fetch(`/api/locations/reverse?lat=${lat}&lng=${lng}`)
+      const res = await fetch(`${API_URL}/api/locations/reverse?lat=${lat}&lng=${lng}`)
       if (res.ok) {
         const data = await res.json()
         const resolvedName = data.displayName || data.name
@@ -168,7 +169,7 @@ export const NewOrderForm: React.FC = () => {
         setActiveTarget('drop')
 
         try {
-          const res = await fetch(`/api/locations/reverse?lat=${lat}&lng=${lng}`)
+          const res = await fetch(`${API_URL}/api/locations/reverse?lat=${lat}&lng=${lng}`)
           if (res.ok) {
             const data = await res.json()
             setPickupLocation(data.displayName || data.name || 'Current Device Location')

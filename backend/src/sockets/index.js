@@ -23,8 +23,9 @@ async function joinRoleRooms(socket) {
 }
 
 export function attachSockets(httpServer) {
+  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',').map((s) => s.trim());
   const io = new Server(httpServer, {
-    cors: { origin: config.frontendOrigins, credentials: true },
+    cors: { origin: allowedOrigins, credentials: true },
     connectionStateRecovery: { maxDisconnectionDuration: 2 * 60_000 }, // replay missed events after short drops
   });
   setIo(io);

@@ -18,6 +18,7 @@ import {
 import { useApp } from '../../context/AppContext'
 import { OrderStatus, Order } from '../../types'
 import { OpenStreetMap } from '../common/OpenStreetMap'
+import { API_URL } from '../../services/api'
 
 export const OrderTracking: React.FC = () => {
   const {
@@ -72,7 +73,7 @@ export const OrderTracking: React.FC = () => {
     const dLat = currentOrder.deliveryLat
     const dLng = currentOrder.deliveryLng
 
-    fetch(`/api/routes/directions?originLat=${pLat}&originLng=${pLng}&destLat=${dLat}&destLng=${dLng}`)
+    fetch(`${API_URL}/api/routes/directions?originLat=${pLat}&originLng=${pLng}&destLat=${dLat}&destLng=${dLng}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.ok && Array.isArray(data.coordinates) && data.coordinates.length > 0) {

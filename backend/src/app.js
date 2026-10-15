@@ -1,4 +1,3 @@
-import path from 'node:path';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -21,6 +20,7 @@ export function createApp() {
 
   // 1. Security headers. (Plain-http local dev must not be force-upgraded to https.)
   app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
     contentSecurityPolicy: {
       directives: {
         'img-src': [
@@ -37,15 +37,20 @@ export function createApp() {
       },
     },
   }));
-  // 2. CORS: only the configured frontend origin(s). Unset = same-origin only, never a wildcard.
+  // 2. CORS: allowed frontend origin(s).
+  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',').map((s) => s.trim());
   app.use(cors({
-    origin: config.frontendOrigins,
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }));
   // 3. Small JSON bodies only (blocks payload bombs).
   app.use(express.json({ limit: '16kb' }));
+
+  // Root health check / service info
+  app.get('/', (req, res) => res.json({ ok: true, service: 'logipulse-api' }));
+
   // In-memory tile cache: ensures high-speed map panning without duplicate requests or rate limit burn
   const tileCache = new Map();
   const MAX_TILES = 1500;
@@ -179,15 +184,6 @@ export function createApp() {
   app.use('/api/users', userRoutes);
   app.use('/api/admin', adminRoutes);
   app.use('/api', notFound);
-
-  // Frontend (static) is served from the same origin, so one deploy covers app + API + sockets.
-  app.use(express.static(path.resolve(import.meta.dirname, '..', 'public')));
-
-  // SPA fallback: any non-API route serves index.html
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.resolve(import.meta.dirname, '..', 'public', 'index.html'));
-  });
 
   app.use(errorHandler); // must be last
   return app;

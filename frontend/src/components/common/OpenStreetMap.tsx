@@ -42,6 +42,7 @@ export const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
   className = '',
   onLocationSelect,
 }) => {
+  const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<L.Map | null>(null)
   const layerGroupRef = useRef<L.LayerGroup | null>(null)
@@ -75,7 +76,7 @@ export const OpenStreetMap: React.FC<OpenStreetMapProps> = ({
 
     // Compliant OpenStreetMap tile layer served through local backend cache
     // No API keys required, no rate limit watermarks, zero 403 blocks
-    const tileLayer = L.tileLayer('/api/tiles/{z}/{x}/{y}.png', {
+    const tileLayer = L.tileLayer(`${API_URL}/api/tiles/{z}/{x}/{y}.png`, {
       maxZoom: 19,
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
